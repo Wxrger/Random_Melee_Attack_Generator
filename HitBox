@@ -1,0 +1,17 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class hitBox : MonoBehaviour
+{
+   [SerializeField]
+  float dmg;
+    
+  void OnTriggerEnter2D(Collider2D trig)
+  {
+    if(trig.tag == "Player")
+    {
+      trig.GetComponent<PlayerStats>().TakeDmg(dmg);
+    }
+  }
+}
