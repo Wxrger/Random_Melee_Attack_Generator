@@ -1,0 +1,214 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Melee_Enemy : MonoBehaviour
+{
+   //Purpose: Handle Melee Enemy Behaviour and Attack Patterns.
+     
+    [SerializeField]
+    Animator anim;
+
+    [SerializeField]
+    int maxAnims;  // Max Amount of animations Enemy Can Play.
+
+    [SerializeField]
+    float mveSpd, dmg, attckCd,distance2Attck, distance2Flw, distance2Target; // Move Speed. Damage. Time between attacks. Distance to Attack. Distance to Follow. Distance to Current Target
+
+    float intAttckCd, distance2Right, distance2Left, distance2Player; // Initial time between attacks. No example or explaination needed for other parameters
+
+    [SerializeField]
+    Transform target, left, right, plyer; //Current Target. Left Boundry, Right Boundry. Players Transform. CONSTRAINT: If there is a left boundry there must be a right boundry and vice versa.
+
+    [SerializeField]
+    Rigidbody2D mE_rb; // Melee Enemy RigidBody2D CONSTRAINT: Must Have A RigidBody2D
+
+    GameObject player;
+
+    bool canMove, canAttck, cooling, facingLeft;
+
+    int nxtAttck; // Next Attack Sequence.
+
+
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        player = GameObject.Find("Player");
+        plyer = player.transform;
+        intAttckCd = attckCd;
+        canAttck = false;
+        cooling = false;
+        canMove = true;
+        mE_rb = GetComponent<Rigidbody2D>();
+        nxtAttck = 1;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        Logic();
+    }
+
+        
+
+
+   // Feed Int from ChooseAttack to the Animator
+   void Attack()
+    {
+       
+     anim.SetBool("attack", true);
+
+     anim.SetInteger("states", nxtAttck);
+    }
+
+        
+        
+    
+
+
+
+
+   void Move()
+    {
+        
+        mE_rb.position = Vector2.MoveTowards(mE_rb.position, target.position, mveSpd * Time.deltaTime);
+       
+    }
+
+    void CoolDown()
+    {
+      
+        anim.SetInteger("states", 0);
+        anim.SetBool("attack", false);
+        attckCd -= .01f;
+        canAttck = false;
+        if(attckCd <= 0f)
+        {
+         cooling = false;
+         attckCd = intAttckCd;
+         canAttck = true;
+        }
+        
+        
+    }
+
+    
+
+    void Logic()
+    {
+        ChooseTarget();
+
+        if(canAttck && !cooling && distance2Target <= distance2Attck)
+        {
+            canMove = false; // Stop enemies movement while attacking 
+            Attack();
+        }
+
+        if(cooling)
+        {
+            canMove = true;
+            ChooseAttck();
+            CoolDown();
+        }
+
+        if(canMove && distance2Target <= distance2Flw)
+        {
+            Move();
+        }
+
+        Flip();
+    }
+    
+    // Purpose: Choose a random number [1, maxAnims] to dictate next attack sequence
+    void ChooseAttck()
+    {
+      nxtAttck = Random.Range(1, maxAnims + 1);
+    }
+    
+    void ChooseTarget()
+    {
+        
+        distance2Player = Vector2.Distance(transform.position, plyer.position);
+
+        if(left == null || right == null)
+        {
+            target = plyer;
+            if(distance2Player <= distance2Flw)
+            {
+                target = plyer;
+                if(distance2Player <= distance2Attck && !cooling)
+                {
+                    canAttck = true;
+                }
+
+
+            }
+        
+        }else
+        {
+            distance2Left = Vector2.Distance(transform.position, left.position);
+            distance2Right = Vector2.Distance(transform.position, right.position);
+
+          
+            if(distance2Player <= distance2Flw)
+            {
+                target = plyer;
+                if(distance2Player <= distance2Attck)
+                {
+                    canAttck = true;
+                }
+
+
+            }else
+            {
+             if(distance2Left > distance2Right)
+             {
+                 target = left;
+             }else
+             {
+                 target = right;
+             }
+            }
+
+        }
+      distance2Target = Vector2.Distance(transform.position, target.position);
+        
+    }
+
+    
+    //Activate CoolIt With an animation Event at the end of attack
+    public void CoolIt()  
+    {
+        cooling = true;
+        
+    }
+
+
+        
+  // Purpose: Return to the eternal Void
+    void Die()
+    {
+        Destroy(gameObject);
+    }
+
+    void Flip()
+  {
+     Vector3 rotation = transform.eulerAngles;
+     if(transform.position.x > target.position.x)
+     {
+       rotation.y = 0f;
+     }
+
+     else 
+      {
+       rotation.y = 180f;
+      }
+
+     transform.eulerAngles = rotation;
+    }
+        
+
+
+
+}
